@@ -8,7 +8,7 @@ public class testConnection {
     JedisPoolConfig poolConfig = new JedisPoolConfig();
     JedisPool pool = new JedisPool(poolConfig, "44.224.154.230", 6379);
     try(Jedis jedis = pool.getResource()) {
-      jedis.set("iris", "evan");
+      jedis.rpush("12345", "evan");
       System.out.println(jedis.get("iris")); // prints bar
     }
 
@@ -16,8 +16,7 @@ public class testConnection {
     System.out.println(jedis.ping());
 
     System.out.println(jedis.get("foo"));
-
-
+    
   }
 
 }

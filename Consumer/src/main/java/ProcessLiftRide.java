@@ -1,4 +1,6 @@
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -19,6 +21,7 @@ public class ProcessLiftRide implements Runnable {
   private final String QUEUE_NAME;
   private final Connection connection;
   private final JedisPool jedisPool;
+  private final Gson gson;
 
 
   public ProcessLiftRide(ConcurrentHashMap<Integer, List<LiftRideEvent>> liftRide, String QUEUE_NAME,
@@ -27,31 +30,37 @@ public class ProcessLiftRide implements Runnable {
     this.QUEUE_NAME = QUEUE_NAME;
     this.connection = connection;
     this.jedisPool = jedisPool;
+    this.gson = new Gson();
   }
 
   @Override
   public void run() {
     try(Jedis jedis = jedisPool.getResource()) {
-      System.out.println(jedis.ping());
+
       Channel channel = connection.createChannel();
+
       channel.queueDeclare(QUEUE_NAME, false, false, false, null);
 
-      channel.basicQos(10);
+      channel.basicQos(1);
       System.out.println(" [*] Thread waiting for messages. To exit press CTRL+C");
 
       DeliverCallback deliverCallback = (consumerTag, delivery) -> {
         String message = new String(delivery.getBody(), "UTF-8");
         LiftRideEvent liftRideEvent = parseLiftRideEvent(message);
 
+        try {
+          updateSkierLiftRides(liftRideEvent);
+          jedis.rpush(getKey(liftRideEvent), getLiftRidesData(liftRideEvent));
+          System.out.println("Pushed to Redis key: " + getKey(liftRideEvent) + ", Value: " + getLiftRidesData(liftRideEvent));
 
-        updateSkierLiftRides(liftRideEvent);
-        jedis.rpush(getKey(liftRideEvent), getLiftRidesData(liftRideEvent));
 
-
-        channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-        System.out.println( "Callback thread ID = " + Thread.currentThread().getId() + " Received '" + message + "'");
+          channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+          System.out.println( "Callback thread ID = " + Thread.currentThread().getId() + " Received '" + message + "'");
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
       };
-      // process messages
+
       channel.basicConsume(QUEUE_NAME, false, deliverCallback, consumerTag -> { });
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -79,7 +88,9 @@ public class ProcessLiftRide implements Runnable {
   }
 
   private LiftRideEvent parseLiftRideEvent(String message) {
-    return new Gson().fromJson(message, LiftRideEvent.class);
+    JsonObject jsonObject = JsonParser.parseString(message).getAsJsonObject();
+    JsonObject dataObject = jsonObject.getAsJsonObject("data");
+    return gson.fromJson(dataObject, LiftRideEvent.class);
   }
 
 
