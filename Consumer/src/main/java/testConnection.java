@@ -16,7 +16,7 @@ public class testConnection {
     System.out.println(jedis.ping());
 
     System.out.println(jedis.get("foo"));
-    
+
   }
 
 }

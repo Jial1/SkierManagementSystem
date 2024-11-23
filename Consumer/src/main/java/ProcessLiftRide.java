@@ -51,8 +51,6 @@ public class ProcessLiftRide implements Runnable {
         try {
           updateSkierLiftRides(liftRideEvent);
           jedis.rpush(getKey(liftRideEvent), getLiftRidesData(liftRideEvent));
-          System.out.println("Pushed to Redis key: " + getKey(liftRideEvent) + ", Value: " + getLiftRidesData(liftRideEvent));
-
 
           channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
           System.out.println( "Callback thread ID = " + Thread.currentThread().getId() + " Received '" + message + "'");

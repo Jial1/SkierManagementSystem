@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Recv {
   private final static String QUEUE_NAME = "liftRideEvent_Queue";
-  private final static int NUM_Thread = 400;
+  private final static int NUM_Thread = 500;
 
   public static void main(String[] argv) throws Exception {
       ConnectionFactory factory = new ConnectionFactory();
@@ -24,7 +24,7 @@ public class Recv {
 
 
       JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
-      jedisPoolConfig.setMaxTotal(500);
+      jedisPoolConfig.setMaxTotal(600);
       JedisPool jedisPool = new JedisPool(jedisPoolConfig, "44.224.154.230", 6379);
 
 
