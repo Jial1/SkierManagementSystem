@@ -24,7 +24,7 @@ public class Recv {
 
 
       JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
-      jedisPoolConfig.setMaxTotal(600);
+      jedisPoolConfig.setMaxTotal(550);
       JedisPool jedisPool = new JedisPool(jedisPoolConfig, "44.224.154.230", 6379);
 
 

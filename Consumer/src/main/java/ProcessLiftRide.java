@@ -36,12 +36,10 @@ public class ProcessLiftRide implements Runnable {
   @Override
   public void run() {
     try(Jedis jedis = jedisPool.getResource()) {
-
-      Channel channel = connection.createChannel();
-
+      final Channel channel = connection.createChannel();
       channel.queueDeclare(QUEUE_NAME, false, false, false, null);
 
-      channel.basicQos(1);
+      channel.basicQos(10);
       System.out.println(" [*] Thread waiting for messages. To exit press CTRL+C");
 
       DeliverCallback deliverCallback = (consumerTag, delivery) -> {
